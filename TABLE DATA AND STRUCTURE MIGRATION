@@ -1,0 +1,89 @@
+TABLE DATA AND STRUCTURE MIGRATION 
+========================================================================
+RAW DESIGN DOCUMENT:
+=================================
+
+The job is to take the table structure and table data and to copy the data through ssh tunnelling to the destination remote server and to restore those files in the remote server . 
+
+For particular schemas , and for particular tables .
+ 
+CONFIG FILE :
+============
+
+Config file consist of the following below ,
+
+structure db db db db 
+table db table table table 
+
+The job  will read the file in two ways , if the first string is “structure” , then it will do for structure migration of the following schemas in the line . It will copy all the table structures alone and restore it in the destination schema . 
+
+This should be given in the first line , if the job needs structure migration . 
+Simply it will drop the existing table and create the new table . 
+
+If the first string is table , then the second string should be the db name , followed by the tables in the db . It may consist many lines specified for many dbs like , 
+
+table db1 table1 table2 table 3
+Table db 2 table1 table 2table 3 table 4 
+
+You may specify ,( n )number of dbs as well as (n) number of tables in a db . 
+
+It is dynamically growing . 
+
+Process:
+
+First is the validation . 
+If one validation fails , then it will by default exit 0 . i.e the job fails from the next line and will terminate . The job consists of many functions . 
+
+1) Validate function :
+
+Check mysql service is running on the host server . 
+Check tunnel config is present or not . 
+Check whether mysqldump default-plugin is  present or not . 
+ Check whether ssh connection is successfully connecting or not . 
+Check whether mysqldump default plugin is present or not in the remote host .
+Check in remote  if mysql is running or not . 
+If all the checkers are succeeded , then  it will call the array function 
+
+ 
+ 2)Array function :
+
+Reads the config file line by line , 
+Algorithm : 
+If the first string of the line is “structure” , then the structure array is generated from the second string of the line to the nth  of the string in the line. 
+Same as , 
+If the first string is “table” , then the table array is generated from the third string of the line to the  nth string of the line .  since the second string will be taken as db . 
+This algorithm repeats for the nth line . 
+
+While loop for reading the config file line by line . 
+For every array created , then according to the table fun and structure fun are called .
+
+3)Table and structure function :
+
+It is run in a loop to one by one , and dump is taken for the array (table or structure), 
+Check if the dump is successful or not . 
+If check ok , then 
+Call the tunnelling function . 
+Else
+Exit 0 .
+	
+4)Tunnelling Function:
+
+ 			check whether connection exists or not through ssh  . 
+IF ok , 
+Then rsyc the file to the remote server . 
+If success , 		
+Then call the restore function .
+5)Restore  fun :
+	Check mysql in remote is running or not and tunnelling connections . 
+	if ok 
+	Then restore the file which is migrated to the destination db . 
+			Check 
+			If the restoration completes , Then ok 
+Continue to the next array value in the table or structure array . 
+else exit 0 . 
+	If all the lines are processed in the config , then the job exits successfully . 
+
+
+If any one of the checks fails at any step , the script will exit the job . 
+Mail fun will be added for mail notification in case of success as well as the failure  . 
+Checks are done at every step to maintain the service  reliability .
