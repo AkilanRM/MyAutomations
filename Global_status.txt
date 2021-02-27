@@ -1,0 +1,79 @@
+#!/bin/bash 
+#set -x 
+echo "start"
+scriptpath=/home/mydbops/G_STATUS
+date=`date +%Y_%m_%d`
+delete=7
+filepath=$scriptpath/file
+mailing=0
+retention+=($date)
+length=${#retention[@]}
+while IFS= read -r server
+do
+	arr=($server)
+	name=${arr[0]}
+	user=${arr[1]}
+	host=${arr[2]}
+	login_path=${arr[3]}
+	echo "$name $user $host $login_path "
+	unset a 
+	v=''  
+	while IFS= read -r v
+	do
+		a+=("$v")
+	done < $scriptpath/variables
+	len=${#a[@]}
+	let "x=len-1"
+	strt="select now(), @@hostname , variable_name , variable_value from performance_schema.global_status where variable_name in ("
+	for (( i=0; i<$len ; i++ ))
+	do
+		#echo ${a[i]}
+		if [ $i = "$x" ]
+		then
+			str="'${a[i]}');"
+			strt=`echo ${strt}${str}`
+			continue
+		else
+			str="'${a[i]}',"
+			strt=`echo ${strt}${str}`
+		fi
+	done
+	#echo $strt
+	ssh -n $user@$host "mysql --login-path=$login_path -e \"$strt\" -s -N  "  > $scriptpath/my_file
+	unset ar 
+	file=`echo ${name}"_"${date}`
+	while IFS= read -r value
+	do
+		ar=($value)
+		dat=${ar[0]}
+		tym=${ar[1]}
+		hostname=${ar[2]}
+		variable=${ar[3]}
+		val=${ar[4]}
+		final=`echo '"'${dat}'","'${tym}'","'${hostname}'","'${variable}'","'${val}'"'`
+		#echo "$final"
+		echo "$final" >> $filepath/$file.csv
+	done < $scriptpath/my_file
+	if [ $length = "$delete" ]
+	then
+		remove=${retention[0]}
+		retention=(" ${retention[@]:1:$length} ")
+		del=`echo ${name}"_"${remove}`
+		`rm -f $filepath/$del.csv`
+	fi
+	if [ $mailing = "1" ]
+	then
+        	echo "FROM: 'MYDBOPS' <user_info@kreditbee.com> " > /tmp/csv
+        	echo " " >> /tmp/csv
+        	echo "Hi Team, " >> /tmp/csv
+        	echo " " >> /tmp/csv
+        	echo "SERVER NAME : $name " >> /tmp/csv
+        	echo "SERVER  IP : $host " >> /tmp/csv
+        	echo "GLOBAL STATUS FILE " >> /tmp/csv
+       		for id in ${mail[@]}
+        	do
+                	`cat /tmp/csv | mail -a $filepath/$file.csv -s " GLOBAL STATUS : $name  $host"  $id `
+       		done
+	fi
+done < $scriptpath/servers
+
