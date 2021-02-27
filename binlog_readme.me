@@ -1,0 +1,86 @@
+BINLOG MIGRATION 
+================
+
+
+This job is to take backup of binlog  and mmigrate it to s3 bucket . It will take every days binlogs regularly and will migrate it to s3  . It will take the copy of the binlog files and will tar the file one by one and will remove the copy by itself .Make sure that you have enough disk space while making copy . Tar file is created because of the space management .   
+the tar files will be collected in a dir , and the dir is completey made as a tar ball and will be pushed to the s3 . 
+
+DEFAULTS :
+
+sendmail should be configured in the server . 
+last_file should be created and it will be an empty file . 
+
+It will generate files and remove files by itself so at last once the tarball is pushed to s3 . no files will be reatined in the server and it gives us the free disk without unwanted consumption of storage . 
+
+config_variables :
+
+s_name="kreditbee_slave1" #server_name
+
+s_host="172.25.12.217"   #server_host
+
+orginal=/data/mysql #binlog_file_path 
+
+name="binlog"
+
+file_name=mysql-bin.
+
+mail=( "dba-group@mydbops.com" "hackerboy0403@gmail.com" ) #mail notification for the mailid , please configure it in array itself 
+
+copy=/data/mybin/$name  #path of the copy dir where the binlogs are copied and processed  , make sure the $name dir is created in this mentioned path . 
+
+tar_path=/data/mybin/bin  #path of the tar_ball generated 
+
+script_path=/usr/local/mydbops/binlog_migration #path of the script file located , make sure last file created in the same path .
+
+list=$script_path/binlog_list # will contain the binlog stirngs . directed to script path . this file will be auto created and will be overwritten on every run . 
+
+region="--region=ap-south-1" # region of the s3 .mention if needed  , or edit the script  
+
+s3_path=s3://kreditbee-binlog-backup #path of the s3 bucket 
+
+filetest=$script_path/last_file #mandatory file 
+
+partition="/data"    #it is required to calculate the disk space , if it is greater than 98%  , then it will exit the script . configure the value in the script according to the required value . 
+
+
+
+because of the requirement , it wont remove the binlogs after it is migrated . for the next run  , if the binlog exist , the script will automatically find the last file migrated in the server and will process from the nexfile . it is one of the key feature . 
+
+binlogs will be purged according to its log expire days only  . 
+
+So this job will wont affect the mysql service at any cause and will be service friendly with mysql serivce . 
+
+mail notification will be sent to the mentioned mail id , if mail is enabled .
+
+sample output : 
+
+2020-09-02 01:13:37 18327041732 binlog_2020September01.tar.gz
+2020-09-03 01:26:08 20062071661 binlog_2020September02.tar.gz
+2020-09-04 01:42:42 24241444900 binlog_2020September03.tar.gz
+2020-09-05 01:24:35 20807545652 binlog_2020September04.tar.gz
+2020-09-06 01:15:51 18943036241 binlog_2020September05.tar.gz
+2020-09-07 01:01:07 14717090572 binlog_2020September06.tar.gz
+2020-09-09 01:07:25 16859893717 binlog_2020September08.tar.gz
+2020-09-10 01:08:32 17011748887 binlog_2020September09.tar.gz
+2020-09-12 01:24:57 19273199223 binlog_2020September11.tar.gz
+2020-09-13 01:12:24 17458023217 binlog_2020September12.tar.gz
+2020-09-14 00:55:09 12959750449 binlog_2020September13.tar.gz
+2020-09-15 01:57:15 26104604197 binlog_2020September14.tar.gz
+2020-09-16 01:16:14 18856470437 binlog_2020September15.tar.gz
+2020-09-17 01:50:51 29008937101 binlog_2020September16.tar.gz
+2020-09-18 01:13:35 17805687347 binlog_2020September17.tar.gz
+2020-09-19 01:22:07 19905871439 binlog_2020September18.tar.gz
+2020-09-20 01:12:06 17454224879 binlog_2020September19.tar.gz
+2020-09-21 00:58:05 13806304587 binlog_2020September20.tar.gz
+2020-09-22 01:11:32 17448405718 binlog_2020September21.tar.gz
+2020-09-23 01:09:34 17118444899 binlog_2020September22.tar.gz
+2020-09-24 01:13:48 18224624001 binlog_2020September23.tar.gz
+2020-09-25 01:13:49 18494927707 binlog_2020September24.tar.gz
+2020-09-26 01:31:06 22968296225 binlog_2020September25.tar.gz
+2020-09-27 01:17:13 19328337759 binlog_2020September26.tar.gz
+2020-09-28 01:03:31 15550744321 binlog_2020September27.tar.gz
+2020-09-29 01:15:47 19089501083 binlog_2020September28.tar.gz
+2020-09-30 01:17:29 19010926789 binlog_2020September29.tar.gz
+2020-10-01 01:28:24 22210323847 binlog_2020September30.tar.gz
+
+like this every days binlog generated will be collected and will be migrated to s3 . 
