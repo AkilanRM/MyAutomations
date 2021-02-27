@@ -1,0 +1,123 @@
+												          IIFL SCHEDULING JOBS 
+
+The main objective of this job is to execute a set of mysql queries like reporting jobs and  transactional jobs, and sending the job status through mail to the mentioned mailids . 
+It reads a configuration file for processing . It has each job as an array of values in the config file . 
+
+SCHEDULED IN
+============ 	
+				Prod_master 
+				prod_slave 
+				nbfc 
+
+			job_path : /usr/local/mydbops/iifl_jobs/bin/scheduling.sh 
+			config   : /usr/local/mydbops/iifl_jobs/bin/scheduling_config.txt
+
+FEATURES : 
+==========
+
+	It can process all schemas , all tables . 
+
+	It can generate csv output in case of reporting queries and wont in case of trasactional queries or procedures . 
+
+	It can notify job status in  mail in case of mailid specified and not if mailid not specifed . It can have ( 1 to n ) mailid specified for a single job . 
+
+	It can  replicate the generated csv files to different paths in case of path specified and wont if not  . It can replicate  ( 1 to n ) paths specified for a single job . 
+
+	It can have  csv file attachments in mail if specified and not if not specified . Singe job can have multiple mailid's with or without  attachment . 
+
+	It has auto retention of generated csv files . If retention is 100 then  , it will maintain untill 99 csv files in the server for every job . if retention hits , then all the files generated in the output path and replicate_path will be deleted . 
+
+
+	It can also run on multiple days in a week and also on daily basis  .(eg : job scheduled only to run on monday and friday everyweek  ).
+
+	It works without the mailid notitication and replication as well . 
+
+
+
+DESCRIPTION FOR JOB CONFIG PREPARATION : 
+
+Please make sure that the jobs are run manually once and also check the output path for the file generation and error file for errors . 
+
+
+CONFIG: 
+=======
+
+	It reads config file for processing and config file consist of array values in single space seperated format for every single job . 
+	the array value consist of 
+
+		(Job_time  loginpath  sql_file_path  database_name  output_file path  mysqlerrorlog_path  day  output  [ mailid[1]...[a]...mailid[n] ]  [replicate_path[1]...[replicate_path[n]])
+
+
+	1) Job_time - it is spcified in hours and minutes in railwaytime , 08:30 PM will be as 2030 in the config 
+
+	2) loginpath - loginpath should be configured to access the db. 
+
+	3) sql_file_path - the job is a sql query or procedure should be written in a .sql file and should give executable permission . The full  path of the job must be specified . 
+
+	4) databasename - Schema for the particular query job . 
+
+	5) output_file_path - If output is needed , then the file name should be with the extension  .csv and if not , then the file name should be specified but of any format . The complete path of the file should be given . jobs without output  also requires output file because the records of execution  will be stored in the file  . 
+
+	6) mysqlerrorlog_path=complete path of the errorlog file sould be given . 
+
+	7) day - [ regular , Mon , Tue , Wed , Thu , Fri , Sat , Sun ]
+	It can consist of any of these above values . regular means that the job runs daily .It wrong parameter passes , the the job will skip executing the particular job .  
+
+	8) output - [ output , nooutput ]
+		If the output is needed , then this values should be specified as output and if not needed , it must be specified with nooutput . 
+		sql_file_path is determinded only by this value .
+
+	mailid - We can have [1] to [n] mailids notified for a single job . 
+
+	9) a value  = each and every mailid may or maynot have [a] value in it . it a is specified after the mailid  , then that mailid will be notified with attachment of generated . if the mail id have a value , then it will be notified with attachments . 
+
+	10) replicate_path - We can have [1] to [n] path replicated  for a single job , and auto deleted in all the paths as well . 
+
+
+
+Note that all the values must be space seperated with each other . 
+
+With the above config , you can schedule jobs by the specified values . 
+
+Eg configs 
+===========
+
+1) jobs  with attachment and ouput required : 
+
+1215 mydbops /root/email_jobs/query/onemadeHolding.sql bodb /tmp/onemadeHolding.csv /tmp/mydbops_test/onemadeHolding.err regular output abhishek.soni@iiflw.com a gaurav.doshi@iiflw.com a geeta.yadav@iiflw.com harsh.shah@iiflw.com mugdha.singhal@iiflw.com saurabh.pugalia@iiflw.com Karthik.Nair@iiflw.com Subbiah.Somasundaram@iiflw.com a Chetan@iiflw.com a mariappan@mydbops.com a vinod.dhone@iiflw.com a /root/email_jobs/data/
+
+In the above example , some ids have a value and some not and also output value is specified and it is regular job (i.e)runs daily . the replication is set to only one path at the end 
+
+
+2) jobs with attachment and scheduled only on Monday : 
+
+
+1024 mydbops /root/email_jobs/query/onemadeHolding.sql bodb /tmp/onemadeHolding.csv /tmp/mydbops_test/onemadeHolding.err Mon output abhishek.soni@iiflw.com a gaurav.doshi@iiflw.com a geeta.yadav@iiflw.com harsh.shah@iiflw.com mugdha.singhal@iiflw.com saurabh.pugalia@iiflw.com Karthik.Nair@iiflw.com Subbiah.Somasundaram@iiflw.com a Chetan@iiflw.com a mariappan@mydbops.com a vinod.dhone@iiflw.com a /root/email_jobs/data/
+/root/job_output/
+
+now the job run only on every Mon , also the replication path have more than 1 path  . so the file will be replicated in 2 paths . 
+
+
+3) jobs without output and scheduled on every saturday  : 
+
+0013 mydbops /usr/local/mydbops/iifl_jobs/mysql_jobs/Live_user2.sql bodb /tmp/Live_user2.csv /tmp/mydbops_test/Live_user2.err Sat nooutput  ponsuresh@mydbops.com ramaswamy.sunka@iiflw.com chetan@iiflw.com j.vinothraj@iiflw.com himanshu.mehta@iiflw.com subhash.devalekar@iiflw.com vinod.dhone@iiflw.com 
+
+nooutput jobs also needs output file , but it will hold the records of the execution . 
+nooutput also wont accept replication . 
+
+
+Like wise , we can schedule a job according to the requirement specified . 
+
+
+DEFAULT PATHS :
+================
+
+job_path=/usr/local/mydbops/iifl_jobs/mysql_jobs/  ##path for sql file . create a manual sql file and paste the job in the path . 
+
+output_path=/tmp/ 
+
+for defaults path for  error file , check the existing configs in config file . 
+
+Job status will be notified for every job seperately if mailid is specified . 
+
+

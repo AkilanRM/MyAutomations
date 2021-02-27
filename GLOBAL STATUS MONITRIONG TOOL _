@@ -1,0 +1,63 @@
+GLOBAL STATUS MONITRIONG TOOL :
+===============================
+
+This tool is helpful in monitoring the global status and will convert it into csv file , among 590 variables , you can specify the variables in the variable files , those status variables and its value will be stored in the csv file with the date also with hostname . 
+
+could be deployed centerlised or for pirtucular server as well . 
+
+It has retention period , delete variable in the script will take an int as input and that much days the files will be present in the server . 
+for eg : if delete=100 , then 100 days files will be persisted in the server . 
+
+this script can be modifiled for global variaables also , by editing the script with global variables table and give the variables files with g
+lobal variables . 
+
+It can be maintained for 
+below example i have given two variables . 
+
+Innodb_buffer_pool_read_requests  :  The number of logical read requests (buffer pool).
+Innodb_buffer_pool_reads  :  The number of logical reads that InnoDB could not satisfy from the buffer pool, and had to read directly from disk.
+- create file script.sh and add the respective script .
+
+- create a file called servers and add hostname username of mysql password login_path
+
+local root 10.10.0.10  mydbops #servername user host loginpath #passwordless login is required in case of centralised deployment  
+
+
+-  create a file variables and add the respective status variables one by one
+ 
+- Innodb_buffer_pool_read_requests
+- Innodb_buffer_pool_reads
+- create a directory called file in the same path
+
+both the above files are described in the git . 
+
+- set the path scriptpath=/home/vagrant in the script.sh
+
+config variables : 
+=================
+It has some feature functionalities as well .
+
+delete=7 #retention_days of file  
+
+filepath=$scriptpath/file #file dir where the generated csv's are directed . 
+
+mailing=0 #mailing will be enabled if the value is set to 1 , # mail should be configured in the node . 
+- 
+crontab 
+=======
+* * * * * /home/vagrant/script.sh >>/home/vagrant/script.log 
+ 
+OUTPUT : 
+========
+root@stg-3ds-db40:/home/dbadmin/file# cat ivs2_2020_11_03.csv # timestamp , hostname , status name , status value . #
+"2020-11-03","15:54:25","stg-3ds-db40","Innodb_buffer_pool_read_requests","21607497"
+"2020-11-03","15:54:25","stg-3ds-db40","Innodb_buffer_pool_reads","1648"
+"2020-11-03","15:59:05","stg-3ds-db40","Innodb_buffer_pool_read_requests","21613082"
+"2020-11-03","15:59:05","stg-3ds-db40","Innodb_buffer_pool_reads","1648"
+
+root@stg-3ds-db40:/home/dbadmin/file# cat ivs3_2020_11_03.csv
+"2020-11-03","16:05:57","stg-3ds-db66","Innodb_buffer_pool_read_requests","16606"
+"2020-11-03","16:05:57","stg-3ds-db66","Innodb_buffer_pool_reads","437"
+
+like this you can configure for all global status and variables . 
+
