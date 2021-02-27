@@ -1,0 +1,36 @@
+SYSBENCH BENCHMARKING TOOL TO ANALYZE THE DB PERFORMANCE ON HUGE LOADS :
+
+This script will run the sysbench command on different threads and with different  record size . So we can able to analyze the system performance running on different threads on different records . We can even tune the script as we needed since some of the values are dynamic and can be changed in the runtime as well . 
+For better performance . 
+
+It will do bulk inserts , read_only , read_write operations . 
+You can remove in the config if the any of the above mentioned benchmarks are not needed according to the system capacity . 
+
+MANDATORY :
+
+Sysbench tool and mysql is needed to perform this run . 
+
+CONFIG VARIABLES :
+
+mysql_host=10.142.0.32
+mysql_user=username #mysql_user
+password=passwword #myssql_password
+port=3306  #mysql_port
+declare -a types=( 'bulk' 'readalone' 'readwrite' ) # remove any if not needed .
+arr=( 1 2 4 6 8 16 32 64 128 256 512 ) # it is the array of threads , so remove values according to the system capacity .
+no_table=20     #no of tables 
+t=300           #time in  secs 
+size=1000000    #default size for thread load . 
+a=('thread' 'record') #it defines , the benchmarking on different threads as well as different loads . 
+record=(1000000 20000000 30000000 40000000 80000000 280000000 ) #no of different record size to be loaded can be changed according to the system capacity , also change the thread in the script according to your system capacity as well . 
+
+
+
+The above are the config variables which need to be tuned according  to the system capacity , i.e core and memory allocated . 
+
+Everytime , for bulk insert , it will prepare , run and cleanup will be done .
+ 
+For read_only and read_write , it will prepare once , run for different threads and different records and will cleanup once . 
+
+
+Every log will be stored in a log file and error will be stored in the .fail file  for each and every process of preapre , run and cleanup with its different process names . 
